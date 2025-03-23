@@ -59,8 +59,15 @@ export default function Navbar() {
                             <>
                                 {user ? (
                                     <div className="flex items-center space-x-4">
+                                        {user.get('avatar') && (
+                                            <img
+                                                src={user.get('avatar').url()}
+                                                alt="Avatar"
+                                                className="w-10 h-10 rounded-full"
+                                            />
+                                        )}
                                         <span className="text-gray-300">
-                                            {user.username}
+                                            {user.getUsername()}
                                         </span>
                                         <button
                                             onClick={handleLogout}

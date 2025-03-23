@@ -1,62 +1,102 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Project from '@/models/Project';
-import Parse from 'parse';
 import Link from 'next/link';
+import Parse from 'parse';
+import AddTeamMember from '@/components/AddTeamMember';
+import TeamMembersList from '@/components/TeamMembersList';
+
+// Initialiser Parse ici (si ce n'est pas déjà fait ailleurs)
+// Ceci devrait être fait une seule fois dans votre application
+if (typeof window !== 'undefined') {
+  Parse.initialize('VOTRE_APP_ID', 'VOTRE_JS_KEY');
+  Parse.serverURL = 'VOTRE_SERVER_URL';
+}
 
 export default function ProjectMembersPage() {
-    const { id } = useParams<{ id: string }>();
-    const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const router = useRouter();
+  const router = useRouter();
+  const { id } = useParams<{ id: string }>();
+  const [project, setProject] = useState<Parse.Object | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    const handleAddMember = async () => {
-        setLoading(true);
-        setError('');
+  useEffect(() => {
+    // Vérifier que l'utilisateur est connecté
+    if (typeof window !== 'undefined') {
+      const currentUser = Parse.User.current();
+      if (!currentUser) {
+        router.push('/login');
+        return;
+      }
+      setIsAuthenticated(true);
+    }
+  }, [router]);
 
-        try {
-            const user = await Parse.Cloud.run('findUserByEmail', { email });
+  useEffect(() => {
+    if (!isAuthenticated || !id) return;
+    
+    const fetchProject = async () => {
+      try {
+        const Project = Parse.Object.extend('Project');
+        const query = new Parse.Query(Project);
+        query.include('owner');
+        const result = await query.get(id);
 
-            if (!user) {
-                throw new Error('Utilisateur non trouvé');
-            }
-
-            await Project.addTeamMember(id, user.id);
-            alert('Membre ajouté avec succès !');
-            router.refresh();
-        } catch (err: any) {
-            setError(err.message || 'Erreur lors de l\'ajout du membre');
-        } finally {
-            setLoading(false);
+        if (!result) {
+          throw new Error('Projet non trouvé');
         }
+
+        setProject(result);
+      } catch (err: any) {
+        setError(err.message || 'Erreur lors du chargement du projet');
+        setProject(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    return (
-        <div className="max-w-2xl mx-auto mt-6">
-            <h1 className="text-2xl font-bold mb-6">Ajouter un membre</h1>
-            {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>}
-            <div className="flex space-x-2">
-                <input
-                    type="email"
-                    placeholder="Email du membre"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-black"
-                />
-                <button
-                    onClick={handleAddMember}
-                    disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                >
-                    {loading ? 'Ajout en cours...' : 'Ajouter'}
-                </button>
-                <Link href={'/projects'} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-center">
-                    Annuler
-                </Link>
-            </div>
+    fetchProject();
+  }, [id, router, isAuthenticated]);
+
+  const handleMemberAdded = () => {
+    router.refresh();
+  };
+
+  if (!isAuthenticated) {
+    return <div className="container mx-auto p-4">Vérification de l'authentification...</div>;
+  }
+
+  if (loading) {
+    return <div className="container mx-auto p-4">Chargement...</div>;
+  }
+
+  if (error) {
+    return <div className="container mx-auto p-4 text-red-500">Erreur: {error}</div>;
+  }
+
+  if (!project) {
+    return <div className="container mx-auto p-4">Projet non trouvé</div>;
+  }
+
+  return (
+    <div className="container mx-auto p-4">
+      <div className="mb-6">
+        <Link href={`/projects/${id}`} className="text-blue-500 hover:underline">
+          &larr; Retour au projet
+        </Link>
+        <h1 className="text-3xl font-bold mt-2">{project.get('name')} - Gestion des membres</h1>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-8">
+        <div>
+          <AddTeamMember projectId={id} onMemberAdded={handleMemberAdded} />
         </div>
-    );
+        <div>
+          <TeamMembersList projectId={id} />
+        </div>
+      </div>
+    </div>
+  );
 }

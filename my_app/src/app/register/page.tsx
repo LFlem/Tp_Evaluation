@@ -9,6 +9,7 @@ export default function Register() {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [avatar, setAvatar] = useState<File | null>(null);
     const router = useRouter();
 
     const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
@@ -19,6 +20,11 @@ export default function Register() {
         user.set('password', password);
 
         try {
+            if (avatar) {
+                const parseFile = new Parse.File(avatar.name, avatar);
+                user.set('avatar', parseFile);
+            }
+
             await user.signUp();
             alert('Utilisateur inscrit avec succès !');
             router.push('/projects'); // Redirige vers la liste des projets
@@ -76,6 +82,18 @@ export default function Register() {
                         required
                     />
                 </div>
+                <div className="mb-6">
+                    <label htmlFor="avatar" className="block text-gray-700 mb-2">
+                        Avatar (optionnel)
+                    </label>
+                    <input
+                        type="file"
+                        id="avatar"
+                        accept="image/*" // Accepter uniquement les fichiers image
+                        onChange={(e) => setAvatar(e.target.files?.[0] || null)} // Stocker le fichier sélectionné
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
                 <button
                     type="submit"
                     className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
@@ -84,10 +102,10 @@ export default function Register() {
                 </button>
 
                 <div className="mt-4 text-center">
-                        Déjà un compte ? {' '}
-                        <Link href="/login" className="text-blue-600 hover:underline">
+                    Déjà un compte ? {' '}
+                    <Link href="/login" className="text-blue-600 hover:underline">
                         Se connecter
-                        </Link>
+                    </Link>
                 </div>
             </form>
         </div>
