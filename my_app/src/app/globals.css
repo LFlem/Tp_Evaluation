@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.custom-bg {
+  background-color: white;
+}
+input {
+  display: block; /* Assurez-vous que chaque champ soit sur une nouvelle ligne */
+  width: 100%; /* S'assurer que les champs remplissent la largeur */
+  margin-bottom: 1rem; /* Espacement entre les champs */
+  padding: 0.5rem; /* Espacement interne */
+  border: 1px solid #ccc; /* Bordure */
+  border-radius: 0.25rem; /* Coins arrondis */
+  color: #0a0a0a;
+}
+
+button {
+  background-color: #0a0a0a; /* Couleur de fond pour le bouton */
+  color: white; /* Couleur du texte du bouton */
+  padding: 0.5rem 1rem; /* Espacement interne */
+  border: none; /* Pas de bordure */
+  border-radius: 0.25rem; /* Coins arrondis */
+  cursor: pointer; /* Changement de curseur */
+}
